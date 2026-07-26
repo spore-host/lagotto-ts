@@ -1,0 +1,70 @@
+{
+  "name": "@spore-host/lagotto-ts",
+  "version": "0.1.0",
+  "description": "Browser-native EC2 capacity watching — match instance-type patterns against live availability and report when capacity appears. A TypeScript port of the spore.host lagotto tool.",
+  "keywords": [
+    "aws",
+    "ec2",
+    "capacity",
+    "spot",
+    "gpu",
+    "spore-host",
+    "lagotto",
+    "instance-availability",
+    "browser",
+    "typescript"
+  ],
+  "homepage": "https://github.com/spore-host/lagotto-ts#readme",
+  "bugs": "https://github.com/spore-host/lagotto-ts/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spore-host/lagotto-ts.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Scott Friedman",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./live": {
+      "types": "./dist/live/index.d.ts",
+      "import": "./dist/live/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run build:lib && npm run docs",
+    "build:lib": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build:lib",
+    "docs": "typedoc",
+    "clean": "rm -rf dist site",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "@spore-host/truffle-ts": "^0.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@spore-host/truffle-ts": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@spore-host/truffle-ts": "^0.4.2",
+    "@types/node": "^26.1.1",
+    "@vitest/coverage-v8": "^2.1.9",
+    "typedoc": "^0.28.20",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -1,0 +1,16 @@
+lagotto-ts
+Copyright 2026 Scott Friedman
+
+This product includes software developed by Scott Friedman.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+lagotto-ts is a browser-native reimplementation of the EC2 capacity-watching
+model of the spore.host `lagotto` tool (https://github.com/spore-host/lagotto).
+It watches for instance-type capacity and reports matches; the pure matching
+core is offline, and live capacity checks run through the truffle-ts live
+finder (Node-only, behind the "./live" subpath).
