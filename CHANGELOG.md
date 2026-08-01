@@ -7,6 +7,13 @@ breaking changes bump the MINOR version.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-31
+
+Breaking, and MINOR because pre-1.0: `MatchResult.price` is now
+`number | undefined`, because the release's central fix is that **an unknown price
+is reported as unknown — never as `0`**. A zero read as free, so it passed every
+price cap and won every "cheapest" comparison.
+
 ### Fixed
 
 - **An unknown price no longer passes a price cap, or wins "cheapest".** Two
@@ -63,5 +70,6 @@ breaking changes bump the MINOR version.
   `./live`), `build:lib`, `prepare`, Trusted-Publishing `publish.yml`, CI,
   TypeDoc.
 
-[Unreleased]: https://github.com/spore-host/lagotto-ts/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/spore-host/lagotto-ts/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/spore-host/lagotto-ts/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/spore-host/lagotto-ts/releases/tag/v0.1.0

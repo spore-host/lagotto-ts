@@ -1,6 +1,6 @@
 {
   "name": "@spore-host/lagotto-ts",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Browser-native EC2 capacity watching — match instance-type patterns against live availability and report when capacity appears. A TypeScript port of the spore.host lagotto tool.",
   "keywords": [
     "aws",
