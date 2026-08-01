@@ -78,8 +78,21 @@ export function evaluate(w: Watch, c: MatchCandidate): MatchResult | null {
 
   // On-demand branch.
   if (!w.spot) {
-    const price = c.instanceType.onDemandPrice ?? 0;
-    if (maxPrice > 0 && price > maxPrice) {
+    // An UNKNOWN price must not satisfy a price ceiling. This read `?? 0`, which
+    // made an absent price compare as free and therefore pass *every* maxPrice —
+    // a watch that says "wake me under $1/hr" would fire on a machine whose cost
+    // we can't establish, and the user finds out from the bill. An error must
+    // never be indistinguishable from an absence of data (truffle-ts#63), and a
+    // missing price is an absence, not a zero.
+    //
+    // Latent until truffle-ts 0.5.0, which made this the COMMON case: it now
+    // omits the price for types it can't price rather than fabricating one
+    // (truffle-ts#39/#42), so `undefined` arrives here routinely instead of never.
+    //
+    // Only rejects when a ceiling is actually set: with no maxPrice the watch has
+    // expressed no price opinion and an unpriced type is still a valid match.
+    const price = c.instanceType.onDemandPrice;
+    if (maxPrice > 0 && (price == null || price > maxPrice)) {
       return null;
     }
     // Restrict/order the offered AZs by the watch's preference (empty = all
