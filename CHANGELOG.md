@@ -2,8 +2,18 @@
 
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
-adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-1.0,
-breaking changes bump the MINOR version.
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+**lagotto-ts stays on `0.x.y` indefinitely.** There is no planned 1.0.0, so
+breaking changes bump the MINOR version — permanently, not as a pre-release
+convention. Read a MINOR bump as "may break you" for the life of the project.
+
+Its version line is **its own**, and deliberately not the Go tool's: at time of
+writing lagotto-ts is 0.2.x against Go `lagotto` v0.51.x, and matching those
+numbers would assert a feature correspondence that does not exist. Parity with Go
+is a **behavioural** claim with documented divergences, tracked in
+[#5](https://github.com/spore-host/lagotto-ts/issues/5) — never a claim that two
+version strings agree.
 
 ## [Unreleased]
 

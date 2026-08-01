@@ -71,7 +71,7 @@ const first = await watcher.poll(
 );
 ```
 
-## Scope of this release (v0.1.0 — Foundation)
+## Scope of this release (v0.2.0)
 
 - ✅ Pure matcher (`evaluate`), glob/regex patterns, duration parsing, AZ
   preference, `http-200` + `s3-empty` completion conditions.
@@ -80,6 +80,12 @@ const first = await watcher.poll(
   goal-driven fleet supervision — these are daemon/server concerns tracked for
   later milestones. The Go [`lagotto`](https://github.com/spore-host/lagotto) has
   the full set today.
+
+lagotto-ts stays on `0.x.y` **indefinitely**; there is no planned 1.0.0. Its
+version line is its own and is not synchronised with Go `lagotto`'s — parity there
+is a behavioural claim with documented divergences
+([#5](https://github.com/spore-host/lagotto-ts/issues/5)), audited per-command
+rather than asserted by matching version numbers.
 
 ## License
 
