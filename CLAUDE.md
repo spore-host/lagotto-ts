@@ -30,9 +30,16 @@ poller here without a decision; those belong to the backend, not this library.
 ## Versioning & changelog (required)
 
 Semantic Versioning + Keep a Changelog. Every user-facing change updates
-`CHANGELOG.md` under `## [Unreleased]` in the same PR. Pre-1.0, breaking changes
-bump MINOR. Release: rename `[Unreleased]` → `[X.Y.Z] - DATE`, tag `vX.Y.Z` →
-`publish.yml` publishes to npm via Trusted Publishing (OIDC, no token).
+`CHANGELOG.md` under `## [Unreleased]` in the same PR. Release: rename
+`[Unreleased]` → `[X.Y.Z] - DATE`, tag `vX.Y.Z` → `publish.yml` publishes to npm
+via Trusted Publishing (OIDC, no token).
+
+**`0.x.y` indefinitely — there is no planned 1.0.0.** Breaking changes bump MINOR
+permanently, not as a pre-release convention. Never propose a 1.0.0, and never
+bump to match Go `lagotto`'s version (v0.51.x vs our 0.2.x): the version lines are
+independent on purpose. Parity with Go is a **behavioural** claim carrying
+documented divergences ([#5](https://github.com/spore-host/lagotto-ts/issues/5));
+equal version strings would assert a feature correspondence that doesn't exist.
 
 ## Build & test
 
