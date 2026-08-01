@@ -59,6 +59,27 @@ export interface CapacityWatcherOptions {
 /** A single check's outcome: the best match, or null if no capacity appeared. */
 export type CheckResult = MatchResult | null;
 
+/**
+ * Is `m` a better "cheapest match" than the incumbent `best`?
+ *
+ * A match with NO price must not win. `MatchResult.price` became optional when
+ * truffle-ts 0.5.0 started omitting prices it can't establish rather than
+ * fabricating them (truffle-ts#39/#42), and the comparison here was `m.price <
+ * best.price` — under which an absent price coerces and an unpriced type takes
+ * the "cheapest" slot it has the least evidence for. Same defect truffle-ts's own
+ * sort had, one layer up.
+ *
+ * A priced match always beats an unpriced one; an unpriced match is only kept
+ * when there's nothing else, so a watch on a type nobody prices still reports
+ * capacity rather than silently finding none.
+ */
+function isCheaper(m: MatchResult, best: MatchResult | null): boolean {
+  if (best === null) return true;
+  if (m.price == null) return false; // never displaces anything
+  if (best.price == null) return true; // any real price beats no price
+  return m.price < best.price;
+}
+
 export class CapacityWatcher {
   private readonly finder: CapacityFinder;
   private readonly now: () => Date;
@@ -96,7 +117,7 @@ export class CapacityWatcher {
         const m = evaluate(watch, { instanceType: inst, spotPrice: toSpotObservation(sp) });
         if (m) {
           m.matchedAt = stamp;
-          if (best === null || m.price < best.price) best = m;
+          if (isCheaper(m, best)) best = m;
         }
       }
     } else {
@@ -104,7 +125,7 @@ export class CapacityWatcher {
         const m = evaluate(watch, { instanceType: inst });
         if (m) {
           m.matchedAt = stamp;
-          if (best === null || m.price < best.price) best = m;
+          if (isCheaper(m, best)) best = m;
         }
       }
     }

@@ -43,6 +43,35 @@ describe("evaluate — on-demand branch", () => {
     expect(evaluate(baseWatch, c)).not.toBeNull();
   });
 
+  it("rejects an UNPRICED offering against a price cap", () => {
+    // The price read `?? 0`, so an absent price compared as free and passed EVERY
+    // ceiling: a watch saying "wake me under $1/hr" fired on a machine whose cost
+    // we cannot establish, and the user learned the price from the bill.
+    //
+    // Latent until truffle-ts 0.5.0 made it the common case — that version omits
+    // the price for types it can't price rather than fabricating one
+    // (truffle-ts#39/#42), so `undefined` now arrives here routinely.
+    const w: Watch = { ...baseWatch, maxPrice: 1 };
+    const c: MatchCandidate = {
+      // The real shape of an unpriced entry: p6e-gb200.36xlarge, ~$100/hr.
+      instanceType: { instanceType: "p6e-gb200.36xlarge", region: "us-east-1", availableAZs: ["us-east-1a"] },
+    };
+    expect(evaluate(w, c)).toBeNull();
+  });
+
+  it("still matches an unpriced offering when NO cap is set", () => {
+    // Symmetry matters: with no maxPrice the watch has expressed no price opinion,
+    // so an unpriced type is a legitimate match. Rejecting it here would make a
+    // brand-new accelerator unwatchable — the wrong correction to the bug above.
+    const c: MatchCandidate = {
+      instanceType: { instanceType: "p6e-gb200.36xlarge", region: "us-east-1", availableAZs: ["us-east-1a"] },
+    };
+    const m = evaluate(baseWatch, c);
+    expect(m).not.toBeNull();
+    // And the price it reports must stay absent rather than becoming a 0 downstream.
+    expect(m!.price).toBeUndefined();
+  });
+
   it("honors an AZ pin: reorders to the preference and picks the first", () => {
     const w: Watch = { ...baseWatch, availabilityZones: ["us-east-1c", "us-east-1a"] };
     const c: MatchCandidate = {

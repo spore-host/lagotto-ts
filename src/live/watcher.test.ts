@@ -51,6 +51,36 @@ describe("CapacityWatcher.check — on-demand", () => {
     const w = new CapacityWatcher({ finder, now: fixedNow });
     expect(await w.check({ ...watch, maxPrice: 0.5 })).toBeNull();
   });
+
+  it("does not let an UNPRICED offering win 'cheapest'", async () => {
+    // The comparison was `m.price < best.price`. With price now optional
+    // (truffle-ts 0.5.0 omits prices it can't establish rather than fabricating
+    // them — truffle-ts#39/#42), an absent price coerces and the type we know
+    // LEAST about takes the cheapest slot. Same defect as truffle-ts's own sort,
+    // one layer up. Listed first here so a plain scan would pick it.
+    const finder = finderOf([
+      { instanceType: "g5.unpriced", region: "us-east-1", availableAZs: ["us-east-1a"] },
+      { instanceType: "g5.xlarge", region: "us-east-1", onDemandPrice: 1.006, availableAZs: ["us-east-1a"] },
+    ]);
+    const w = new CapacityWatcher({ finder, now: fixedNow });
+    const m = await w.check(watch);
+    expect(m!.instanceType).toBe("g5.xlarge");
+    expect(m!.price).toBe(1.006);
+  });
+
+  it("still reports an unpriced offering when it's the only match", async () => {
+    // Sunk, not dropped — otherwise a watch on a brand-new accelerator reports no
+    // capacity when capacity exists, which is the worse failure: the user waits
+    // forever on a machine that was available the whole time.
+    const finder = finderOf([
+      { instanceType: "g5.unpriced", region: "us-east-1", availableAZs: ["us-east-1a"] },
+    ]);
+    const w = new CapacityWatcher({ finder, now: fixedNow });
+    const m = await w.check(watch);
+    expect(m).not.toBeNull();
+    expect(m!.instanceType).toBe("g5.unpriced");
+    expect(m!.price).toBeUndefined(); // unknown, never 0
+  });
 });
 
 describe("CapacityWatcher.check — spot", () => {

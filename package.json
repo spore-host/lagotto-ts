@@ -52,7 +52,7 @@
     "test:cov": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@spore-host/truffle-ts": "^0.4.0"
+    "@spore-host/truffle-ts": "^0.4.0 || ^0.5.0"
   },
   "peerDependenciesMeta": {
     "@spore-host/truffle-ts": {
@@ -60,7 +60,7 @@
     }
   },
   "devDependencies": {
-    "@spore-host/truffle-ts": "^0.4.2",
+    "@spore-host/truffle-ts": "^0.5.0",
     "@types/node": "^26.1.1",
     "@vitest/coverage-v8": "^2.1.9",
     "typedoc": "^0.28.20",

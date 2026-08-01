@@ -55,8 +55,20 @@ export interface MatchResult {
    */
   candidateAzs: string[];
   instanceType: string;
-  /** Hourly USD — Spot price for a spot match, on-demand price otherwise. */
-  price: number;
+  /**
+   * Hourly USD — Spot price for a spot match, on-demand price otherwise.
+   *
+   * **`undefined` when the source didn't price the type**, which is a real
+   * outcome and not an error: truffle-ts 0.5.0 omits the price for types it can't
+   * price rather than fabricating one (truffle-ts#39/#42). This was a required
+   * `number`, and that type forced the very fabrication we're trying to remove —
+   * the matcher had to invent a `0`, and a 0 read as free.
+   *
+   * A spot match always carries a price (the observation is the reason it
+   * matched); only the on-demand branch can leave it absent. Render it as unknown,
+   * never as `0`.
+   */
+  price?: number;
   isSpot: boolean;
   /** ISO-8601 timestamp the match was observed (set by the watcher). */
   matchedAt?: string;
