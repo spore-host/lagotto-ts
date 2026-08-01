@@ -14,7 +14,7 @@
 // EC2 instance-type capacity and report when it appears.
 
 /** Library version, matching package.json. */
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 
 // Domain types.
 export type { Watch, MatchResult, ActionMode, WatchStatus } from "./core/types.js";
