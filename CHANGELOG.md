@@ -111,6 +111,10 @@ version strings agree.
     pattern matches no instance type in any region, the port of Go
     `warnUnmatchablePattern`. The watch keeps going.
 
+- `parseDuration`'s comment claimed it matched Go's `fmt.Sscanf("%d")`. It
+  never did, and the difference is intentional. Go silently truncates `"1.5d"` to
+  1d (spore-host/lagotto#201), while lagotto-ts rejects it. The comment now says so.
+
 - **A pin's version comment can no longer silently misstate what CI runs.**
   `src/ci-hygiene.test.ts` required only that *some* `# vN` comment be present,
   never that it was true. A wrong label is worse than a missing one: it makes a
