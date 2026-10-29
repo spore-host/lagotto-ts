@@ -146,3 +146,47 @@ describe("evaluate — spot branch", () => {
     expect(evaluate(spotWatch, c)).toBeNull();
   });
 });
+
+// Go TestEvaluate_CarriesVCPUs (#153): both branches carry the authoritative vCPU
+// count; a candidate without one leaves it absent, never a guessed 0.
+describe("evaluate — vCPUs (Go #153)", () => {
+  const typeResult = { instanceType: "g6e.xlarge", region: "us-east-1", availableAZs: ["us-east-1a"], onDemandPrice: 2.24, vcpus: 4 };
+
+  it("on-demand branch carries vcpus", () => {
+    const m = evaluate({ watchId: "w-v1", instanceTypePattern: "g6e.xlarge", regions: ["us-east-1"] }, { instanceType: typeResult });
+    expect(m!.vcpus).toBe(4);
+  });
+
+  it("spot branch carries vcpus from the back-filled instance type", () => {
+    const m = evaluate(
+      { watchId: "w-v2", instanceTypePattern: "g6e.xlarge", regions: ["us-east-1"], spot: true },
+      {
+        instanceType: typeResult,
+        spotPrice: { instanceType: "g6e.xlarge", region: "us-east-1", availabilityZone: "us-east-1a", spotPrice: 0.8 },
+      },
+    );
+    expect(m!.vcpus).toBe(4);
+  });
+
+  it("leaves vcpus absent when the source gave none", () => {
+    const m = evaluate(
+      { watchId: "w-v3", instanceTypePattern: "g6e.xlarge", regions: ["us-east-1"] },
+      { instanceType: { instanceType: "g6e.xlarge", region: "us-east-1", availableAZs: ["us-east-1a"] } },
+    );
+    expect(m).not.toBeNull();
+    expect(m!.vcpus).toBeUndefined();
+    expect("vcpus" in m!).toBe(false);
+  });
+
+  it("leaves vcpus absent on the spot branch too", () => {
+    const m = evaluate(
+      { watchId: "w-v4", instanceTypePattern: "g6e.xlarge", regions: ["us-east-1"], spot: true },
+      {
+        instanceType: { instanceType: "g6e.xlarge", region: "us-east-1" },
+        spotPrice: { instanceType: "g6e.xlarge", region: "us-east-1", availabilityZone: "us-east-1a", spotPrice: 0.8 },
+      },
+    );
+    expect(m!.isSpot).toBe(true);
+    expect("vcpus" in m!).toBe(false);
+  });
+});

@@ -33,6 +33,42 @@ version strings agree.
   has no JSON unmarshal-type error, so only `SyntaxError` is terminal. Go's test
   table is ported case for case. `ClassifySageMakerFailure` is not ported, because
   SageMaker watching is out of scope here.
+- **The small pure helpers from Go lagotto v0.64.1**
+  ([#3](https://github.com/spore-host/lagotto-ts/issues/3)). Go's test tables are
+  ported case for case for each one:
+  - `scheduleExpression({ at | after | cron }, now)` turns its input into an
+    EventBridge Scheduler `at(...)` (UTC, no zone suffix) or `cron(...)`
+    expression, and says whether it is a one-shot. Go's refusals are kept: zero
+    or several inputs, a non-RFC 3339 or past `at`, and a delay that is not
+    greater than zero. `at` parsing is strict RFC 3339. `Date.parse` would have
+    accepted a zoneless string as local time, and a bare date.
+  - `parseTTL` and `parseGoDuration` follow Go: `time.ParseDuration` first
+    (`1h30m`, `1.5h`), then the `7d`/`1w` short form. `parseGoDuration` is checked
+    against cases from Go's own stdlib table.
+  - `validateWatchPattern(service, pattern)`, `isValidService` and
+    `normalizeService` (`""` becomes `"ec2"`). An EC2 watch may not use an `ml.*`
+    pattern, and a SageMaker watch must. Each rung of a comma list is checked.
+  - `validateWebhookURLSyntax` covers only the half of Go's `ValidateWebhookURL`
+    that works without DNS, and it is **not** an SSRF guard. It requires https
+    and a host, and rejects a literal loopback, private, link-local or unspecified
+    IP, an IPv4-mapped IPv6 address, `localhost`/`*.localhost`, and `*.invalid`.
+    It cannot reject a hostname that *resolves* to a private address. A browser
+    has no DNS API and no dial hook, so Go's resolve-and-re-vet defence against
+    DNS rebinding cannot be reproduced here. The name says so, and so do the docs.
+- **Comma-separated instance-type patterns** (Go lagotto #135, v0.55+).
+  `"g6.4xlarge,g6.2xlarge"` matches either type: each rung keeps its own glob or
+  regex meaning, and the rungs are OR'd. Before this, `compilePattern` produced
+  `^g6\.4xlarge,g6\.2xlarge$`, which matches nothing, so a watch copied from the Go
+  CLI waited forever. New exports: `patternToRegex` and
+  `splitInstanceTypePatterns`.
+- **`MatchResult.vcpus`** (Go #153). A match now carries the type's vCPU count
+  when the source reports one. `truffleFinderAdapter` passes truffle-ts's `vcpus`
+  through. When the count is unknown the field is absent, never `0`.
+- **`WatchStatus` gains `"completed"`**: a fleet watch whose completion condition
+  became true. It differs from `"matched"`, which is a single-shot watch that
+  fired once. **`Watch` gains `service`, `desiredCount` and
+  `completionCondition`** so a watch record from the Go tool round-trips.
+  lagotto-ts still does not supervise fleets.
 
 ### Changed
 

@@ -19,6 +19,8 @@ export interface InstanceOffering {
   onDemandPrice?: number;
   /** AZs where this type is offered in the region (empty/undefined if unknown). */
   availableAZs?: string[];
+  /** vCPU count, if the source reported it; carried onto the match (Go #153). */
+  vcpus?: number;
 }
 
 /** A live Spot price observation for an instance type in one AZ. */
@@ -65,7 +67,7 @@ export function evaluate(w: Watch, c: MatchCandidate): MatchResult | null {
     if (!azAllowed(az, w.availabilityZones)) {
       return null;
     }
-    return {
+    const m: MatchResult = {
       watchId: w.watchId,
       region: c.spotPrice.region,
       availabilityZone: az,
@@ -74,6 +76,10 @@ export function evaluate(w: Watch, c: MatchCandidate): MatchResult | null {
       price: c.spotPrice.spotPrice,
       isSpot: true,
     };
+    // Go #153: carry the authoritative vCPU count; guard so a hand-built
+    // candidate without one doesn't stamp a zero.
+    if ((c.instanceType.vcpus ?? 0) > 0) m.vcpus = c.instanceType.vcpus;
+    return m;
   }
 
   // On-demand branch.
@@ -104,7 +110,7 @@ export function evaluate(w: Watch, c: MatchCandidate): MatchResult | null {
       return null;
     }
     const az = candidates.length > 0 ? candidates[0]! : "";
-    return {
+    const m: MatchResult = {
       watchId: w.watchId,
       region: c.instanceType.region,
       availabilityZone: az,
@@ -113,6 +119,8 @@ export function evaluate(w: Watch, c: MatchCandidate): MatchResult | null {
       price,
       isSpot: false,
     };
+    if ((c.instanceType.vcpus ?? 0) > 0) m.vcpus = c.instanceType.vcpus;
+    return m;
   }
 
   // Spot watch but no pricing data available — no match.

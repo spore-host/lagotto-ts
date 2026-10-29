@@ -70,6 +70,7 @@ describe("truffleFinderFor (lagotto-ts#1)", () => {
     await watcher.check(w);
     expect(built).toEqual(["us-east-1", "us-west-2"]);
     expect(m!.region).toBe("us-west-2");
+    expect(m!.vcpus).toBe(192); // truffle-ts vcpus reaches the match (Go #153)
   });
 
   it("a single-region adapter refuses a watch on another region", async () => {

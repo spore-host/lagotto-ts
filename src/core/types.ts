@@ -1,8 +1,13 @@
 // Core domain types for lagotto-ts — the capacity-watching model, ported from
 // the Go tool's pkg/watcher/types.go. This is the browser-relevant subset: a
 // Watch describes what capacity to look for and MatchResult records a hit. The
-// persistence, lease, fleet-supervisor, and SageMaker fields of the Go Watch are
-// server/daemon concerns and are intentionally omitted from this first cut.
+// persistence, lease, and quota-cap bookkeeping fields of the Go Watch are
+// server/daemon concerns and are intentionally omitted. The fleet-supervisor
+// fields (`desiredCount`, `completionCondition`) are carried so a watch record
+// round-trips, but lagotto-ts does not supervise fleets: nothing here launches,
+// tops up, or evaluates `--until` on its own.
+
+import type { Service } from "./service.js";
 
 /** What happens when capacity is found. */
 export type ActionMode = "notify" | "spawn" | "hold";
@@ -10,7 +15,8 @@ export type ActionMode = "notify" | "spawn" | "hold";
 /** Lifecycle state of a watch. */
 export type WatchStatus =
   | "active" // being polled
-  | "matched" // capacity found and the action fired
+  | "matched" // capacity found and the action fired (a single-shot that fired once)
+  | "completed" // a fleet watch whose completion condition became true — the work is done
   | "expired" // TTL elapsed without a match
   | "cancelled" // cancelled by the user
   | "failed"; // hit a terminal error
@@ -40,6 +46,18 @@ export interface Watch {
   maxPrice?: number;
   /** What to do on a match. Informational in this cut — actions land later. */
   action?: ActionMode;
+  /**
+   * Capacity surface. Absent/"" means "ec2" (Go `normalizeService`). lagotto-ts
+   * only watches EC2; see `validateWatchPattern`.
+   */
+  service?: Service;
+  /** Fleet watches: how many workers to keep running (Go `DesiredCount`). Carried, not acted on. */
+  desiredCount?: number;
+  /**
+   * Fleet watches: the `--until` condition string (Go `CompletionCondition`),
+   * parseable with `parseCondition`. Carried, not evaluated automatically.
+   */
+  completionCondition?: string;
 }
 
 /** A capacity match: the cheapest eligible offering found for a watch. */
@@ -70,6 +88,12 @@ export interface MatchResult {
    */
   price?: number;
   isSpot: boolean;
+  /**
+   * The matched type's vCPU count when the source reported it (Go #153) — the
+   * authoritative figure EC2 quotas are denominated in. Absent, never 0, when
+   * unknown.
+   */
+  vcpus?: number;
   /** ISO-8601 timestamp the match was observed (set by the watcher). */
   matchedAt?: string;
 }

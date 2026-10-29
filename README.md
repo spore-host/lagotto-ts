@@ -81,7 +81,11 @@ const first = await watcher.poll(
 
 - ✅ Pure matcher (`evaluate`), glob/regex patterns, duration parsing, AZ
   preference, `http-200` + `s3-empty` completion conditions.
-- ✅ Live `CapacityWatcher` (`check` + `poll`) over a truffle-ts finder.
+- ✅ Live `CapacityWatcher` (`check` + `poll`) over truffle-ts finders, searching
+  every region a watch names.
+- ✅ Launch-failure classifier (`classifyFailure`: capacity / terminal / unknown),
+  comma-list patterns, scheduled-launch expressions, watch-pattern validation,
+  and a *syntactic* webhook URL check (not an SSRF guard; see `webhook.ts`).
 - ⏳ Not yet: action modes (notify/hold/spawn), persistent/hosted polling, and
   goal-driven fleet supervision — these are daemon/server concerns tracked for
   later milestones. The Go [`lagotto`](https://github.com/spore-host/lagotto) has
