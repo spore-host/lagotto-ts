@@ -55,7 +55,7 @@ version strings agree.
     It cannot reject a hostname that *resolves* to a private address. A browser
     has no DNS API and no dial hook, so Go's resolve-and-re-vet defence against
     DNS rebinding cannot be reproduced here. The name says so, and so do the docs.
-- **Comma-separated instance-type patterns** (Go lagotto #135, v0.55+).
+- **Comma-separated instance-type patterns** (Go lagotto #135, v0.56.0).
   `"g6.4xlarge,g6.2xlarge"` matches either type: each rung keeps its own glob or
   regex meaning, and the rungs are OR'd. Before this, `compilePattern` produced
   `^g6\.4xlarge,g6\.2xlarge$`, which matches nothing, so a watch copied from the Go

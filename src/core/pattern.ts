@@ -60,5 +60,10 @@ export function patternToRegex(pattern: string): string {
  * (mirrors the Go regexp.Compile error path).
  */
 export function compilePattern(pattern: string): RegExp {
+  // A raw-regex pattern is a documented feature (Go accepts one too), so this
+  // cannot be a literal. Go compiles with RE2, which is linear-time; JS
+  // backtracks, so a pathological pattern can stall the tab that supplied it.
+  // That is a self-inflicted stall on the user's own pattern, not a cross-user one.
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
   return new RegExp(patternToRegex(pattern));
 }
