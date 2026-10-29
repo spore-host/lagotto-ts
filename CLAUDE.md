@@ -12,11 +12,18 @@ truffle-ts finder for live checks, mirroring how Go `lagotto` polls via Go
 
 - **`src/core/`** — pure, DOM-free, provider-agnostic. `types.ts` (Watch /
   MatchResult), `matcher.ts` (`evaluate`, ported from Go `Evaluate`), `pattern.ts`
-  (`wildcardToRegex`), `duration.ts`, `azs.ts`, `conditions.ts`. No dependency on
-  truffle-ts or any AWS SDK. This is the `.` export.
+  (`wildcardToRegex`, comma-list `patternToRegex`), `duration.ts`,
+  `go-duration.ts`, `azs.ts`, `conditions.ts`, `failure.ts` (Go `pkg/failure`),
+  `schedule.ts`, `service.ts`, `webhook.ts` (syntactic half only — no DNS in a
+  browser, so it is not an SSRF guard). No dependency on truffle-ts or any AWS
+  SDK. This is the `.` export. Where Go has a test table, the TS test ports it
+  case for case.
 - **`src/live/`** — `CapacityWatcher` (`check` + `poll`), the `./live` export.
   Consumes a truffle-ts finder through a structural `CapacityFinder` interface,
   so truffle-ts stays a **peer/optional** dependency (never imported directly).
+  A watch searches EVERY region in `watch.regions`: through `finderFor(region)`,
+  or through one `finder` that declares the regions it serves. Never let a check
+  quietly search fewer regions than the watch names. Throw instead.
 - Ports track the Go source: keep `evaluate` and `wildcardToRegex` behavior
   identical so a pattern/match behaves the same in the CLI and here.
 

@@ -28,7 +28,9 @@ export function parseDuration(s: string): number {
   }
   const unit = s[s.length - 1]!;
   const val = s.slice(0, -1);
-  // Match the Go fmt.Sscanf("%d") contract: a base-10 integer, nothing else.
+  // A base-10 integer and nothing else. Deliberately STRICTER than Go, whose
+  // fmt.Sscanf("%d") stops at the first non-digit without error, so "1.5d" reads
+  // as 1d there (spore-host/lagotto#201). Rejecting is the behaviour Go should have.
   if (!/^-?\d+$/.test(val)) {
     throw new Error(`invalid duration ${JSON.stringify(s)}: ${JSON.stringify(val)} is not a number`);
   }

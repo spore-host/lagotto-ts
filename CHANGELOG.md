@@ -17,6 +17,59 @@ version strings agree.
 
 ## [Unreleased]
 
+### Added
+
+- **Launch-failure classifier**, ported from Go lagotto `pkg/failure` (v0.64.1)
+  ([#2](https://github.com/spore-host/lagotto-ts/issues/2)): `classifyFailure(err,
+  { postLaunch? })` → `"none" | "capacity" | "terminal" | "unknown"`, plus
+  `isQuotaExceeded`, `failureLabel`, `MAX_CONSECUTIVE_FAILURES` (10) and the three
+  code tables, verbatim. Capacity retries uncapped; quota exhaustion is
+  **terminal**, because waiting never raises a quota; an unlisted code is
+  `unknown`, which retries but is capped. An `@aws-sdk/*` exception is recognised
+  by its `$metadata`/`$fault` anywhere in the `cause`/`AggregateError` chain (Go
+  `errors.As`). A capacity error flattened to text is still capacity (lagotto#140).
+  Two differences from Go, both forced by the platform: spawn-ts has no
+  post-launch sentinel, so the caller passes `postLaunch: true` instead; and JS
+  has no JSON unmarshal-type error, so only `SyntaxError` is terminal. Go's test
+  table is ported case for case. `ClassifySageMakerFailure` is not ported, because
+  SageMaker watching is out of scope here.
+- **The small pure helpers from Go lagotto v0.64.1**
+  ([#3](https://github.com/spore-host/lagotto-ts/issues/3)). Go's test tables are
+  ported case for case for each one:
+  - `scheduleExpression({ at | after | cron }, now)` turns its input into an
+    EventBridge Scheduler `at(...)` (UTC, no zone suffix) or `cron(...)`
+    expression, and says whether it is a one-shot. Go's refusals are kept: zero
+    or several inputs, a non-RFC 3339 or past `at`, and a delay that is not
+    greater than zero. `at` parsing is strict RFC 3339. `Date.parse` would have
+    accepted a zoneless string as local time, and a bare date.
+  - `parseTTL` and `parseGoDuration` follow Go: `time.ParseDuration` first
+    (`1h30m`, `1.5h`), then the `7d`/`1w` short form. `parseGoDuration` is checked
+    against cases from Go's own stdlib table.
+  - `validateWatchPattern(service, pattern)`, `isValidService` and
+    `normalizeService` (`""` becomes `"ec2"`). An EC2 watch may not use an `ml.*`
+    pattern, and a SageMaker watch must. Each rung of a comma list is checked.
+  - `validateWebhookURLSyntax` covers only the half of Go's `ValidateWebhookURL`
+    that works without DNS, and it is **not** an SSRF guard. It requires https
+    and a host, and rejects a literal loopback, private, link-local or unspecified
+    IP, an IPv4-mapped IPv6 address, `localhost`/`*.localhost`, and `*.invalid`.
+    It cannot reject a hostname that *resolves* to a private address. A browser
+    has no DNS API and no dial hook, so Go's resolve-and-re-vet defence against
+    DNS rebinding cannot be reproduced here. The name says so, and so do the docs.
+- **Comma-separated instance-type patterns** (Go lagotto #135, v0.56.0).
+  `"g6.4xlarge,g6.2xlarge"` matches either type: each rung keeps its own glob or
+  regex meaning, and the rungs are OR'd. Before this, `compilePattern` produced
+  `^g6\.4xlarge,g6\.2xlarge$`, which matches nothing, so a watch copied from the Go
+  CLI waited forever. New exports: `patternToRegex` and
+  `splitInstanceTypePatterns`.
+- **`MatchResult.vcpus`** (Go #153). A match now carries the type's vCPU count
+  when the source reports one. `truffleFinderAdapter` passes truffle-ts's `vcpus`
+  through. When the count is unknown the field is absent, never `0`.
+- **`WatchStatus` gains `"completed"`**: a fleet watch whose completion condition
+  became true. It differs from `"matched"`, which is a single-shot watch that
+  fired once. **`Watch` gains `service`, `desiredCount` and
+  `completionCondition`** so a watch record from the Go tool round-trips.
+  lagotto-ts still does not supervise fleets.
+
 ### Changed
 
 - **vitest 5** (from 4.1): `vitest` and `@vitest/coverage-v8` moved together
@@ -32,6 +85,36 @@ version strings agree.
   upgrade nobody scheduled.
 
 ### Fixed
+- **A multi-region watch now searches every region it names**
+  ([#1](https://github.com/spore-host/lagotto-ts/issues/1)). `Watch.regions` was
+  never read: `CapacityWatcher.check()` asked its one finder, and
+  `truffleFinderAdapter(finder, region)` stamped that one region on every row, so
+  a watch over `us-east-1, us-west-2, eu-west-1` answered from us-east-1 alone and
+  sat "waiting" while capacity was free elsewhere — with nothing to say so. Go's
+  `searchBestMatch` passes `w.Regions` to `SearchInstanceTypes`; lagotto-ts now
+  matches it:
+  - New `CapacityWatcherOptions.finderFor(region)` + `truffleFinderFor(make)`:
+    one finder per region, searched concurrently, cheapest match across all.
+    (truffle-ts cannot serve several regions through one finder yet —
+    truffle-ts#31.)
+  - A `CapacityFinder` may declare `regions`; `truffleFinderAdapter` declares its
+    one region. A watch naming a region the finder does not serve, a multi-region
+    watch on a finder that declares nothing, and a watch with no region all
+    **throw** instead of narrowing silently. Rows for regions the watch did not
+    ask for are dropped.
+  - Partial region failure is reported through the new `onWarning` hook and the
+    check continues; **all** regions failing throws (Go `SearchInstanceTypes`, #63).
+  - An on-demand watch that pins `availabilityZones` against a finder that reports
+    no AZ data at all (truffle-ts today, truffle-ts#33) now throws. `evaluate`
+    reads an unknown AZ list as "offered nowhere", so the watch would never match.
+  - The first check of a `poll()` (and every standalone `check()`) warns when the
+    pattern matches no instance type in any region, the port of Go
+    `warnUnmatchablePattern`. The watch keeps going.
+
+- `parseDuration`'s comment claimed it matched Go's `fmt.Sscanf("%d")`. It
+  never did, and the difference is intentional. Go silently truncates `"1.5d"` to
+  1d (spore-host/lagotto#201), while lagotto-ts rejects it. The comment now says so.
+
 - **A pin's version comment can no longer silently misstate what CI runs.**
   `src/ci-hygiene.test.ts` required only that *some* `# vN` comment be present,
   never that it was true. A wrong label is worse than a missing one: it makes a

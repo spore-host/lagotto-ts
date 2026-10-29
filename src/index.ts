@@ -19,15 +19,29 @@ export const VERSION = "0.2.0";
 // Domain types.
 export type { Watch, MatchResult, ActionMode, WatchStatus } from "./core/types.js";
 
+// Watch service + pattern validation (Go service.go).
+export { isValidService, normalizeService, validateWatchPattern } from "./core/service.js";
+export type { Service } from "./core/service.js";
+
 // The pure matcher + its candidate shapes.
 export { evaluate } from "./core/matcher.js";
 export type { MatchCandidate, InstanceOffering, SpotObservation } from "./core/matcher.js";
 
 // Instance-type pattern conversion (glob → regex) + compile helper.
-export { wildcardToRegex, compilePattern } from "./core/pattern.js";
+// Comma-separated lists are OR'd (Go #135).
+export { wildcardToRegex, patternToRegex, splitInstanceTypePatterns, compilePattern } from "./core/pattern.js";
 
 // Short-duration parsing ("7d"/"48h"/"1w" → milliseconds).
 export { parseDuration } from "./core/duration.js";
+// Go time.ParseDuration ("1h30m", "1.5h"), and Go parseTTL (that, then the short form).
+export { parseGoDuration } from "./core/go-duration.js";
+
+// Scheduled-launch expressions for EventBridge Scheduler (Go schedule_expr.go).
+export { scheduleExpression, parseTTL } from "./core/schedule.js";
+export type { ScheduleInput, ScheduleExpressionResult } from "./core/schedule.js";
+
+// Syntactic webhook URL vetting — NOT an SSRF guard (no DNS in a browser); see webhook.ts.
+export { validateWebhookURLSyntax } from "./core/webhook.js";
 
 // Availability-zone preference handling.
 export { azAllowed, orderAZs } from "./core/azs.js";
@@ -36,3 +50,15 @@ export { azAllowed, orderAZs } from "./core/azs.js";
 // not ported — see conditions.ts).
 export { parseCondition, HttpCondition, S3EmptyCondition, parseS3Uri } from "./core/conditions.js";
 export type { Condition, S3Lister } from "./core/conditions.js";
+
+// Launch-failure classification (Go pkg/failure): capacity / terminal / unknown.
+export {
+  classifyFailure,
+  isQuotaExceeded,
+  failureLabel,
+  MAX_CONSECUTIVE_FAILURES,
+  CAPACITY_ERROR_CODES,
+  QUOTA_ERROR_CODES,
+  TERMINAL_ERROR_CODES,
+} from "./core/failure.js";
+export type { FailureKind, ClassifyOptions } from "./core/failure.js";
