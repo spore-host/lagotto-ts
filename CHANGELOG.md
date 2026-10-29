@@ -32,6 +32,32 @@ version strings agree.
   upgrade nobody scheduled.
 
 ### Fixed
+- **A multi-region watch now searches every region it names**
+  ([#1](https://github.com/spore-host/lagotto-ts/issues/1)). `Watch.regions` was
+  never read: `CapacityWatcher.check()` asked its one finder, and
+  `truffleFinderAdapter(finder, region)` stamped that one region on every row, so
+  a watch over `us-east-1, us-west-2, eu-west-1` answered from us-east-1 alone and
+  sat "waiting" while capacity was free elsewhere — with nothing to say so. Go's
+  `searchBestMatch` passes `w.Regions` to `SearchInstanceTypes`; lagotto-ts now
+  matches it:
+  - New `CapacityWatcherOptions.finderFor(region)` + `truffleFinderFor(make)`:
+    one finder per region, searched concurrently, cheapest match across all.
+    (truffle-ts cannot serve several regions through one finder yet —
+    truffle-ts#31.)
+  - A `CapacityFinder` may declare `regions`; `truffleFinderAdapter` declares its
+    one region. A watch naming a region the finder does not serve, a multi-region
+    watch on a finder that declares nothing, and a watch with no region all
+    **throw** instead of narrowing silently. Rows for regions the watch did not
+    ask for are dropped.
+  - Partial region failure is reported through the new `onWarning` hook and the
+    check continues; **all** regions failing throws (Go `SearchInstanceTypes`, #63).
+  - An on-demand watch that pins `availabilityZones` against a finder that reports
+    no AZ data at all (truffle-ts today, truffle-ts#33) now throws. `evaluate`
+    reads an unknown AZ list as "offered nowhere", so the watch would never match.
+  - The first check of a `poll()` (and every standalone `check()`) warns when the
+    pattern matches no instance type in any region, the port of Go
+    `warnUnmatchablePattern`. The watch keeps going.
+
 - **A pin's version comment can no longer silently misstate what CI runs.**
   `src/ci-hygiene.test.ts` required only that *some* `# vN` comment be present,
   never that it was true. A wrong label is worse than a missing one: it makes a

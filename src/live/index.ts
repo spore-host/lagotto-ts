@@ -8,20 +8,26 @@
 //   import { AwsLiveFinder } from "@spore-host/truffle-ts/live";
 //   import { CapacityWatcher } from "@spore-host/lagotto-ts/live";
 //
-//   const aws = new AwsLiveFinder({ regions: ["us-east-1"], pricing: "lazy" });
-//   const watcher = new CapacityWatcher({ finder: truffleFinderAdapter(aws, "us-east-1") });
-//   const match = await watcher.check({ watchId: "w1", instanceTypePattern: "g5.*", regions: ["us-east-1"] });
+//   // One truffle finder per region: truffle-ts's multi-region search drops
+//   // region identity (truffle-ts#31), so lagotto-ts fans out itself.
+//   const watcher = new CapacityWatcher({
+//     finderFor: truffleFinderFor((r) => new AwsLiveFinder({ regions: r, pricing: "lazy" })),
+//   });
+//   const match = await watcher.check({
+//     watchId: "w1", instanceTypePattern: "p5.*", regions: ["us-east-1", "us-west-2"],
+//   });
 
 export { CapacityWatcher } from "./watcher.js";
 export type {
   CapacityFinder,
   CapacityWatcherOptions,
   CheckResult,
+  CheckWarning,
   FinderInstanceType,
   FinderSpotPrice,
 } from "./watcher.js";
 
-export { truffleFinderAdapter } from "./truffle-adapter.js";
+export { truffleFinderAdapter, truffleFinderFor } from "./truffle-adapter.js";
 export type {
   TruffleLiveFinder,
   TruffleInstanceType,

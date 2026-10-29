@@ -52,10 +52,16 @@ const match = evaluate(
 
 ```ts
 import { AwsLiveFinder } from "@spore-host/truffle-ts/live";
-import { CapacityWatcher } from "@spore-host/lagotto-ts/live";
+import { CapacityWatcher, truffleFinderFor } from "@spore-host/lagotto-ts/live";
 
-const finder = new AwsLiveFinder({ regions: ["us-east-1"], pricing: "lazy" });
-const watcher = new CapacityWatcher({ finder });
+// One truffle-ts finder PER REGION: truffle-ts's own multi-region search drops
+// region identity (truffle-ts#31), so lagotto-ts fans out across the watch's
+// regions itself and keeps the cheapest match, as Go lagotto does. A single
+// `finder` also works, but only for the region(s) it declares — a watch naming
+// any other region throws rather than silently searching fewer.
+const watcher = new CapacityWatcher({
+  finderFor: truffleFinderFor((region) => new AwsLiveFinder({ regions: region, pricing: "lazy" })),
+});
 
 // Check once…
 const match = await watcher.check({
