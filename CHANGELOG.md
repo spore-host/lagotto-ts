@@ -17,6 +17,23 @@ version strings agree.
 
 ## [Unreleased]
 
+### Added
+
+- **Launch-failure classifier**, ported from Go lagotto `pkg/failure` (v0.64.1)
+  ([#2](https://github.com/spore-host/lagotto-ts/issues/2)): `classifyFailure(err,
+  { postLaunch? })` → `"none" | "capacity" | "terminal" | "unknown"`, plus
+  `isQuotaExceeded`, `failureLabel`, `MAX_CONSECUTIVE_FAILURES` (10) and the three
+  code tables, verbatim. Capacity retries uncapped; quota exhaustion is
+  **terminal**, because waiting never raises a quota; an unlisted code is
+  `unknown`, which retries but is capped. An `@aws-sdk/*` exception is recognised
+  by its `$metadata`/`$fault` anywhere in the `cause`/`AggregateError` chain (Go
+  `errors.As`). A capacity error flattened to text is still capacity (lagotto#140).
+  Two differences from Go, both forced by the platform: spawn-ts has no
+  post-launch sentinel, so the caller passes `postLaunch: true` instead; and JS
+  has no JSON unmarshal-type error, so only `SyntaxError` is terminal. Go's test
+  table is ported case for case. `ClassifySageMakerFailure` is not ported, because
+  SageMaker watching is out of scope here.
+
 ### Changed
 
 - **vitest 5** (from 4.1): `vitest` and `@vitest/coverage-v8` moved together

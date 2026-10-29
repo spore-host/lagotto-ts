@@ -36,3 +36,15 @@ export { azAllowed, orderAZs } from "./core/azs.js";
 // not ported — see conditions.ts).
 export { parseCondition, HttpCondition, S3EmptyCondition, parseS3Uri } from "./core/conditions.js";
 export type { Condition, S3Lister } from "./core/conditions.js";
+
+// Launch-failure classification (Go pkg/failure): capacity / terminal / unknown.
+export {
+  classifyFailure,
+  isQuotaExceeded,
+  failureLabel,
+  MAX_CONSECUTIVE_FAILURES,
+  CAPACITY_ERROR_CODES,
+  QUOTA_ERROR_CODES,
+  TERMINAL_ERROR_CODES,
+} from "./core/failure.js";
+export type { FailureKind, ClassifyOptions } from "./core/failure.js";
