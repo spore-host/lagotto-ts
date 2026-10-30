@@ -17,6 +17,25 @@ version strings agree.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-30
+
+Breaking, and MINOR because pre-1.0 (see the 0.x policy above). Upgrading from
+0.2.x, these change what existing code gets:
+
+- **truffle-ts 0.4.x is no longer a supported peer.** The range is now
+  `^0.5.0 || ^0.6.0`. truffle-ts 0.4's `getSpotPricing` throws "not implemented
+  yet", so a Spot watch over a 0.4 finder never worked.
+- **A check that cannot search every region its watch names now throws** instead
+  of quietly searching fewer
+  ([#1](https://github.com/spore-host/lagotto-ts/issues/1)): a region the
+  finder does not serve, a multi-region watch on a finder that declares no
+  regions, and a watch with no region.
+- **An on-demand watch that pins `availabilityZones` throws** when the finder
+  reports no AZ data for any result. It used to wait forever. With truffle-ts
+  0.6, build the finder with `includeAZs: true`.
+- **`WatchStatus` gains `"completed"`.** An exhaustive `switch` over it needs a
+  new case.
+
 ### Added
 
 - **Launch-failure classifier**, ported from Go lagotto `pkg/failure` (v0.64.1)
@@ -72,6 +91,18 @@ version strings agree.
 
 ### Changed
 
+- **truffle-ts 0.6 support.** `peerDependencies` is now
+  `@spore-host/truffle-ts@^0.5.0 || ^0.6.0`, and the dev dependency is ^0.6.0.
+  The full suite passes against 0.6.0 and 0.5.0. 0.4.x is dropped: against
+  0.4.0 and 0.4.2 the Spot test fails, because 0.4's `getSpotPricing` throws.
+  truffle-ts 0.6's other breaking changes don't reach lagotto-ts. It never calls
+  `find`, `sortResults` or `onDemandPrice()`, and an unpriced row was already
+  reported as unpriced (0.2.0). A new test file runs `CapacityWatcher` against
+  the real truffle-ts `AwsLiveFinder`, with only the EC2 transport faked, so a
+  truffle-ts release that changes what the finder returns now fails here.
+- The live-check examples build the truffle-ts finder with `includeAZs: true`
+  (truffle-ts 0.6), which an on-demand watch needs to pin `availabilityZones`.
+
 - **vitest 5** (from 4.1): `vitest` and `@vitest/coverage-v8` moved together
   to ^5.0.5. Dependabot had proposed them as separate PRs (#29, #30), and each failed
   `npm ci`, because the coverage plugin must match vitest's exact version. A
@@ -85,6 +116,25 @@ version strings agree.
   upgrade nobody scheduled.
 
 ### Fixed
+
+- **`truffleFinderAdapter` and `truffleFinderFor` now accept a real truffle-ts
+  `AwsLiveFinder` in TypeScript.** The documented
+  `truffleFinderFor((r) => new AwsLiveFinder({ regions: r }))` failed to compile
+  (TS2322/TS2345) against truffle-ts 0.5 and 0.6. `TruffleLiveFinder` typed
+  `search`'s filters as `{ includeAZs?: boolean }` and `getSpotPricing`'s
+  options as `{ onlyActive?: boolean }`, and neither shares a property with
+  truffle-ts's `FilterOptions` or `SpotOptions`. truffle-ts never read either
+  field. The adapter now passes no filters or options, and the seam types them
+  so `AwsLiveFinder` is assignable.
+- **`truffleFinderAdapter` keeps the region a truffle-ts row names.** It stamped
+  its own region on every row. truffle-ts 0.6 returns one row per (type, region),
+  so a truffle finder configured for more regions than the adapter declared had
+  another region's capacity relabelled as this one's, and a watch could match on
+  capacity that exists only elsewhere. Only a row with no region (truffle-ts
+  0.5) is stamped now, and CapacityWatcher drops rows for regions the watch did
+  not name.
+- The published package now includes `NOTICE`, as Apache-2.0 §4(d) requires.
+  0.1.0 and 0.2.0 shipped only LICENSE and README (same fix as truffle-ts#87).
 - **A multi-region watch now searches every region it names**
   ([#1](https://github.com/spore-host/lagotto-ts/issues/1)). `Watch.regions` was
   never read: `CapacityWatcher.check()` asked its one finder, and
@@ -214,6 +264,7 @@ price cap and won every "cheapest" comparison.
   `./live`), `build:lib`, `prepare`, Trusted-Publishing `publish.yml`, CI,
   TypeDoc.
 
-[Unreleased]: https://github.com/spore-host/lagotto-ts/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/spore-host/lagotto-ts/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/spore-host/lagotto-ts/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/spore-host/lagotto-ts/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/spore-host/lagotto-ts/releases/tag/v0.1.0

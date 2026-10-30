@@ -21,7 +21,7 @@ exactly as the Go `lagotto` polls via Go `truffle`.
 ```bash
 npm install @spore-host/lagotto-ts
 # for the live capacity check, also install the peer + its live finder:
-npm install @spore-host/truffle-ts
+npm install @spore-host/truffle-ts   # 0.5.x or 0.6.x
 ```
 
 ## Two entry points
@@ -54,13 +54,13 @@ const match = evaluate(
 import { AwsLiveFinder } from "@spore-host/truffle-ts/live";
 import { CapacityWatcher, truffleFinderFor } from "@spore-host/lagotto-ts/live";
 
-// One truffle-ts finder PER REGION: truffle-ts's own multi-region search drops
-// region identity (truffle-ts#31), so lagotto-ts fans out across the watch's
+// One truffle-ts finder PER REGION: lagotto-ts fans out across the watch's
 // regions itself and keeps the cheapest match, as Go lagotto does. A single
 // `finder` also works, but only for the region(s) it declares — a watch naming
-// any other region throws rather than silently searching fewer.
+// any other region throws rather than silently searching fewer. `includeAZs`
+// (truffle-ts >= 0.6) is what lets an on-demand watch pin availabilityZones.
 const watcher = new CapacityWatcher({
-  finderFor: truffleFinderFor((region) => new AwsLiveFinder({ regions: region, pricing: "lazy" })),
+  finderFor: truffleFinderFor((region) => new AwsLiveFinder({ regions: region, pricing: "lazy", includeAZs: true })),
 });
 
 // Check once…
@@ -77,7 +77,7 @@ const first = await watcher.poll(
 );
 ```
 
-## Scope of this release (v0.2.0)
+## Scope of this release (v0.3.0)
 
 - ✅ Pure matcher (`evaluate`), glob/regex patterns, duration parsing, AZ
   preference, `http-200` + `s3-empty` completion conditions.

@@ -8,10 +8,10 @@
 //   import { AwsLiveFinder } from "@spore-host/truffle-ts/live";
 //   import { CapacityWatcher } from "@spore-host/lagotto-ts/live";
 //
-//   // One truffle finder per region: truffle-ts's multi-region search drops
-//   // region identity (truffle-ts#31), so lagotto-ts fans out itself.
+//   // One truffle finder per region; lagotto-ts fans out across them itself.
+//   // `includeAZs` (truffle-ts >= 0.6) lets an on-demand watch pin AZs.
 //   const watcher = new CapacityWatcher({
-//     finderFor: truffleFinderFor((r) => new AwsLiveFinder({ regions: r, pricing: "lazy" })),
+//     finderFor: truffleFinderFor((r) => new AwsLiveFinder({ regions: r, pricing: "lazy", includeAZs: true })),
 //   });
 //   const match = await watcher.check({
 //     watchId: "w1", instanceTypePattern: "p5.*", regions: ["us-east-1", "us-west-2"],

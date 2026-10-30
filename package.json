@@ -1,6 +1,6 @@
 {
   "name": "@spore-host/lagotto-ts",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Browser-native EC2 capacity watching — match instance-type patterns against live availability and report when capacity appears. A TypeScript port of the spore.host lagotto tool.",
   "keywords": [
     "aws",
@@ -37,7 +37,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "NOTICE"
   ],
   "sideEffects": false,
   "scripts": {
@@ -52,7 +53,7 @@
     "test:cov": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@spore-host/truffle-ts": "^0.4.0 || ^0.5.0"
+    "@spore-host/truffle-ts": "^0.5.0 || ^0.6.0"
   },
   "peerDependenciesMeta": {
     "@spore-host/truffle-ts": {
@@ -60,7 +61,7 @@
     }
   },
   "devDependencies": {
-    "@spore-host/truffle-ts": "^0.5.0",
+    "@spore-host/truffle-ts": "^0.6.0",
     "@types/node": "^26.1.1",
     "@vitest/coverage-v8": "^5.0.5",
     "typedoc": "^0.28.20",

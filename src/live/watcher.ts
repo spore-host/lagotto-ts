@@ -30,7 +30,7 @@ export interface FinderInstanceType {
   onDemandPrice?: number;
   /**
    * AZs where the type is offered in `region`. `undefined` means the finder does
-   * not report AZs at all (truffle-ts today, truffle-ts#33) — distinct from `[]`,
+   * not report AZs at all (truffle-ts <= 0.5, or 0.6 without `includeAZs`) — distinct from `[]`,
    * "offered in no AZ".
    */
   availableAZs?: string[];
@@ -254,7 +254,8 @@ export class CapacityWatcher {
     ) {
       // evaluate() rejects a pinned watch when no offered AZ matches, and an
       // unknown AZ list reads as "offered nowhere" — so this watch would sit at
-      // null forever while capacity may be free (lagotto-ts#1, truffle-ts#33).
+      // null forever while capacity may be free (lagotto-ts#1; truffle-ts reports AZs only from
+      // 0.6 with `includeAZs: true`).
       throw new Error(
         "watch pins availabilityZones but the finder reports no AZ data for any result, so an on-demand match can never be evaluated",
       );

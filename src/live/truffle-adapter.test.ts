@@ -16,6 +16,40 @@ describe("truffleFinderAdapter", () => {
     expect(out).toEqual([{ instanceType: "g5.xlarge", region: "us-west-2", onDemandPrice: 1.006, availableAZs: undefined }]);
   });
 
+  it("keeps the region a truffle-ts >= 0.6 row names instead of relabelling it", async () => {
+    // truffle-ts 0.6 returns one row per (type, region). A finder configured for
+    // more regions than the adapter declares must not have eu-west-1's offering
+    // relabelled as us-east-1's.
+    const truffle: TruffleLiveFinder = {
+      async search() {
+        return [
+          { instanceType: "g6.xlarge", region: "eu-west-1", onDemandPrice: 0.89 },
+          { instanceType: "m7i.large", onDemandPrice: 0.1 }, // <= 0.5 row: no region
+        ];
+      },
+    };
+    const out = await truffleFinderAdapter(truffle, "us-east-1").search(/.*/, {});
+    expect(out.map((r) => [r.instanceType, r.region])).toEqual([
+      ["g6.xlarge", "eu-west-1"],
+      ["m7i.large", "us-east-1"],
+    ]);
+  });
+
+  it("does not match a watch on capacity that exists only in another region", async () => {
+    const truffle: TruffleLiveFinder = {
+      async search() {
+        return [{ instanceType: "g6.xlarge", region: "eu-west-1", onDemandPrice: 0.89 }];
+      },
+    };
+    const watcher = new CapacityWatcher({
+      finder: truffleFinderAdapter(truffle, "us-east-1"),
+      now: fixedNow,
+      onWarning: () => {},
+    });
+    const m = await watcher.check({ watchId: "w1", instanceTypePattern: "g6.*", regions: ["us-east-1"] });
+    expect(m).toBeNull();
+  });
+
   it("has no getSpotPricing when the underlying finder lacks it", () => {
     const truffle: TruffleLiveFinder = { async search() { return []; } };
     const finder = truffleFinderAdapter(truffle, "us-east-1");
