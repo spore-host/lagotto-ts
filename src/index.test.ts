@@ -16,4 +16,14 @@ describe("library scaffold", () => {
     const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version: string };
     expect(VERSION).toBe(pkg.version);
   });
+
+  // Apache-2.0 §4(d): a redistribution must carry the NOTICE file. npm always
+  // packs LICENSE and README, but NOTICE only if "files" names it, so 0.1.0 and
+  // 0.2.0 shipped without it (same gap as truffle-ts#87).
+  it("publishes NOTICE with the package", () => {
+    const pkgPath = fileURLToPath(new URL("../package.json", import.meta.url));
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { files: string[] };
+    expect(pkg.files).toContain("NOTICE");
+    expect(readFileSync(fileURLToPath(new URL("../NOTICE", import.meta.url)), "utf8")).toMatch(/lagotto-ts/);
+  });
 });
